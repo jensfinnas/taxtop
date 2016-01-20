@@ -1,0 +1,777 @@
+<!doctype html>
+<html>  
+    <head>  
+        <title>Who are the richest people in Finland?</title>  
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="raphael-min.js"></script>  
+        <script type="text/javascript" src="g.raphael-min.js"></script>
+        <script type="text/javascript" src="jquery.min.js"></script>
+		<script type='text/javascript' src='jquery.tipsy.js'></script>
+        <script type="text/javascript" src="data.json"></script>  
+		<link rel="stylesheet" href="tipsy.css" type="text/css" />  
+  
+        <style type="text/css">  
+            
+			body, div,table {
+			font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;	
+			}
+			#share {
+				position: absolute;
+				top: 15px;
+				left: 800px;
+			}
+			#text {
+				font-size: 8pt;
+				width: 400px;
+				color: grey;
+				margin-top: 20px;
+			}
+			
+			#canvas_container {  
+                width: 710px;
+                border: 0px solid #aaa; 
+            }
+			#text_container {  
+                width: 700px; 
+ 				height: 130px;  
+  				text-align: center;
+				font-size: 32pt;
+				
+				font-weight:400;
+            }
+			#info {  
+                width: 700px;  
+  				text-align: center;
+				font-size: 12pt;
+				font-weight:400;
+            }
+			#help_window {  
+                width: 190px;  
+				font-size: 12pt;
+				font-weight:300;
+				color: #FFF;
+				padding: 10px;
+				vertical-align: top;
+				position: absolute;
+				left:400px;
+				top:430px;
+            }
+  			.ss {
+				font-size:45pt;
+				font-weight: 800;
+				padding:17px;
+}
+        </style> 
+		<script type="text/javascript">
+
+		  var _gaq = _gaq || [];
+		  _gaq.push(['_setAccount', 'UA-27409955-1']);
+		  _gaq.push(['_trackPageview']);
+
+		  (function() {
+		    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		  })();
+
+		</script> 
+    </head>  
+    <body>
+		<div id="fb-root"></div>
+		<script>(function(d, s, id) {
+		  var js, fjs = d.getElementsByTagName(s)[0];
+		  if (d.getElementById(id)) {return;}
+		  js = d.createElement(s); js.id = id;
+		  js.src = "//connect.facebook.net/sv_SE/all.js#xfbml=1";
+		  fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));</script>
+	<div id="info" onclick="javascript:next(+1)" onmouseover="javascript:this.style.cursor = 'pointer';"><b>Click here</b> to continue or press the <b>right</b> or <b>left key</b>.</div><br>
+	
+	<div id="text_container" onclick="javascript:next(+1)" onmouseover="javascript:this.style.cursor = 'pointer';"></div>    
+        
+	<div id="canvas_container"></div>  
+	<div id="help_window"><table><tr><td><span class="ss">!</td><td>You can lock and follow persons by clicking them.</td></tr></table></div>
+				<script type="text/javascript">
+
+// ****** VARIABLES **************
+
+
+var dot = [],
+	row = 0,
+	col = 0,
+	width = 700,
+	height = 400,
+	lblX = [],
+	lblY = [],
+	nav = [],
+	line,
+	lineLbl;
+
+	var slides = [
+		"So who are the <strong>richest people</strong> in Finland? Click to find out.", //SLIDE 0 
+		"These are the <strong>100 people</strong> with the highest incomes in 2010.", //SLIDE 1
+		"Almost all of them are <strong>men</strong>.",//SLIDE 2
+		"And they are <strong>pretty old</strong>.",//SLIDE 3
+		"Most of them live in the <strong>South of Finland</strong>.",//SLIDE 4
+		"Together they made almost <strong>half a billion euros</strong> last year.",//SLIDE 5
+		"The <strong>top six</strong> made <strong>20 percent</strong> of those millions.", //SLIDE 6
+		"This guy, <strong>John Lindell</strong>, made more money than anyone else.<br> 18 560 070 euros.", //SLIDE 7
+		"The guy next to him is Matti Meikäläinen, <strong>an average Finn</strong> who makes about 33 000 euros a year.", //SLIDE 8
+		"Every <strong>hour</strong> John made almost as much money as Matti did in a <strong>month</strong>.", //SLIDE 9	
+		"How did John and the others make all that money then?", //SLIDE 10
+		"Well, not necessarily by <strong>working</strong>.", //SLIDE 11
+		"For 95 of the top 100 the largest share of the income came from <strong>capital</strong>.", //SLIDE 12
+		"Which means that most of the top earners had a fairly <strong>humble income tax</strong>.", //SLIDE 13
+		"To be more exact: <strong>28 percent</strong>.", //SLIDE 14
+		"Guess who else had that tax? <strong>Matti Meikäläinen</strong>.", //SLIDE 16		
+		"Replay?" //SLIDE 15		
+		],
+
+		currentSlide = 0,
+		fadeSpeed = 200,
+		dotW = 15,
+		dotH = 30,
+		scale = 1,
+		lblFontFace = "Verdana",
+		lblFontOp = .5,
+		lblFontSize = 10;
+		; 
+
+	document.getElementById('text_container').innerHTML = slides[currentSlide];
+
+	function next(a) {
+		if (a == 1 || (a == -1 && currentSlide >= 4)) {
+			if (currentSlide==16) {
+				return
+			}
+			currentSlide += a
+
+
+		if (lblX !== "") {
+			for (i in lblX) {
+				lblX[i].animate({opacity: 0},400)
+			}
+		}
+		if (lblY !== "") {
+			for (i in lblY) {
+				lblY[i].animate({opacity: 0},400)
+			}
+		}
+		
+		updateNav()
+
+		$('#text_container').fadeOut(fadeSpeed, function() {
+	          $(this).html(slides[currentSlide]).fadeIn(fadeSpeed);
+	    }); 
+		window['slide'+currentSlide](a)
+		}
+	}	
+	
+		
+
+var paper = new Raphael(document.getElementById('canvas_container'), width, height),
+	dotPath = "M21.021,16.349c-0.611-1.104-1.359-1.998-2.109-2.623c-0.875,0.641-1.941,1.031-3.103,1.031c-1.164,0-2.231-0.391-3.105-1.031c-0.75,0.625-1.498,1.519-2.111,2.623c-1.422,2.563-1.578,5.192-0.35,5.874c0.55,0.307,1.127,0.078,1.723-0.496c-0.105,0.582-0.166,1.213-0.166,1.873c0,2.932,1.139,5.307,2.543,5.307c0.846,0,1.265-0.865,1.466-2.189c0.201,1.324,0.62,2.189,1.463,2.189c1.406,0,2.545-2.375,2.545-5.307c0-0.66-0.061-1.291-0.168-1.873c0.598,0.574,1.174,0.803,1.725,0.496C22.602,21.541,22.443,18.912,21.021,16.349zM15.808,13.757c2.362,0,4.278-1.916,4.278-4.279s-1.916-4.279-4.278-4.279c-2.363,0-4.28,1.916-4.28,4.279S13.445,13.757,15.808,13.757z",
+	playPath = "M16,1.466C7.973,1.466,1.466,7.973,1.466,16c0,8.027,6.507,14.534,14.534,14.534c8.027,0,14.534-6.507,14.534-14.534C30.534,7.973,24.027,1.466,16,1.466zM13.665,25.725l-3.536-3.539l6.187-6.187l-6.187-6.187l3.536-3.536l9.724,9.723L13.665,25.725z",
+	replayPath = "M12.981,9.073V6.817l-12.106,6.99l12.106,6.99v-2.422c3.285-0.002,9.052,0.28,9.052,2.269c0,2.78-6.023,4.263-6.023,4.263v2.132c0,0,13.53,0.463,13.53-9.823C29.54,9.134,17.952,8.831,12.981,9.073z",
+	fin = function () {
+		var x;
+		if (this._.dx < 100) {
+			x = 100;
+		}
+		else { x = this._.dx}
+		this.flag = paper.label(x,(this._.dy-20), this.node.infotext).toFront();
+	},
+	
+	fout = function () {
+		this.flag.animate({opacity: 0}, 300, function () {this.remove();});
+	}
+		
+// ****** FUNCTIONS **************
+	
+function getPos(i,cols) {
+	r = Math.floor(i/cols)
+	c = i-r*cols
+
+	return [c,r]
+} 
+
+function group(hash,by,value) {
+	grouparray = [],
+	output = {};
+
+	for (var i in hash) {
+		if ($.inArray(hash[i][by],grouparray) == -1) {
+			grouparray.push(hash[i][by])
+			output[hash[i][by]] = []
+		}
+		output[hash[i][by]].push(hash[i][value])		
+
+	}				
+	return output
+}
+
+function getColor(sex) {
+	if (sex=="f") { return "red"}
+	return "blue"
+}
+
+function updateNav() {
+	for (i in nav) {
+		if (currentSlide == i) { fill = "orange"}
+		else {fill = "grey"}
+		
+		nav[i].animate({
+			fill: fill
+		}, 500)
+	}	
+}
+
+$(document).keydown(function(e){
+    if (e.keyCode == 37) { 
+       next(-1);
+       return false;
+    }
+});
+$(document).keydown(function(e){
+    if (e.keyCode == 39) {
+	 	next(1)
+       return false;
+    }  
+});
+
+
+
+//******* START SCREEN ************
+
+play = paper.path(playPath);
+play.translate(width/2,150)
+play.attr({
+	fill: "black",
+	opacity: .5,
+	stroke: "none"
+})
+play.scale(8)
+play.node.onmouseover = function() { 
+	this.style.cursor = 'pointer'; 
+	play.attr({opacity: .8});
+}
+play.node.onclick = function() { 
+	next(+1)
+}
+play.node.onmouseout = function() { 
+	play.attr({opacity: .5});
+	}	
+
+	$('#help_window').fadeOut(0);		
+
+
+
+//******* SLIDE SHOW ************
+
+
+//***** SLIDE1: SHOW ALL *********
+function slide1() {
+	var cols = 20,
+		scale = 1.5;
+		xMargin = (width-cols*dotW*scale)/2,
+		yMargin = 50,
+		matti = "";
+
+play.remove()
+	
+	for (var i in data) {
+
+		dot[i] = paper.path(dotPath);
+		
+		dot[i].translate(getPos(i,cols)[0]*dotW*scale+xMargin,
+						getPos(i,cols)[1]*dotH*scale+yMargin);
+
+
+	    dot[i].attr({
+			fill: "black", 
+			stroke: "none",
+			opacity: 0
+			});
+		dot[i].animate({opacity: .6},1000)
+		dot[i].node.infotext = data[i]["name"]
+		dot[i].hover(fin,fout)
+		
+		col += 1
+	}
+
+//navigation
+	var rectW = 5,
+		space = rectW + 3,
+		margin = (width-space*(slides.length-2))/2;
+
+	for (i=1; i<slides.length-1; i++) {
+		nav[i] = paper.rect(margin+i*space,height-10,rectW,rectW)
+
+		if (currentSlide == i) { fill = "orange"}
+		else {fill = "grey"}
+		nav[i].attr({
+			fill: fill,
+			stroke: 0,
+			opacity:0
+		})
+	}
+	for (i in nav) {
+		nav[i].animate({
+			opacity: .5
+		}, 1000)
+	}
+
+}
+
+//***** SLIDE2: SHOW COLOR *********
+ 
+function slide2() {
+	$('#help_window').fadeIn(500);
+	for (var i in dot) {
+		color = getColor(data[i]["sex"]);
+		dot[i].animate({fill: color},1000);
+		dot[i].node.orgFill = color;
+
+		dot[i].node.onmouseover = function() { 
+			this.style.cursor = 'pointer'; 
+		}
+		dot[i].node.onclick = function() { 
+			if (this.style.fill == "#FFFF00") {
+				this.style.fill = this.orgFill;
+			}
+			else {
+				this.style.fill = "#FFFF00";
+			}
+			
+		}
+	}
+}
+
+//***** SLIDE3: SHOW AGE *********
+
+
+function slide3() {
+	$('#help_window').fadeOut(500);
+	var ages = [],
+		y0 = 26,
+		y1 = 100,
+		yGap = y1-y0,
+		scale = .6,
+		xMargin = (width-yGap*dotW*scale)/2,
+		yMargin = 250; 
+	
+	for (var i=y0;i<y1;i++) {
+		ages.push(i)
+	}
+	groupedData = group(data,"age","index")
+
+				for (var g in groupedData) {
+					for (var i in groupedData[g]) {
+						index = groupedData[g][i]
+
+						dot[index].animate({ transform:"t"+(xMargin+(g-y0)*scale*dotW)+","+(210-i*dotH*scale)+",s"+scale }, 1500);
+					} 
+				}
+
+
+	for (var i in ages) {
+		if (ages[i] % 5 == 0) {
+			lblX[i] = paper.text(xMargin+(ages[i]-y0)*scale*dotW,250,ages[i])
+			lblX[i].attr({ 
+				opacity: .5,
+				font:'Verdana','font-size':10,'text-anchor':'left' 
+				})
+			lblX[i].toBack()
+		
+		}
+		
+		
+	}
+}
+
+//***** SLIDE4: SHOW GEO *********
+
+function slide4() {
+	
+	groupedData = group(data,"region","index"),
+	c = 0,
+	scale = .6,
+	h = 220;
+	
+		for (var g in groupedData) {
+			for (var i in groupedData[g]) {
+				index = groupedData[g][i]
+
+				dot[index].animate({ transform:"t"+(10+i*dotW*scale)+","+(h-c*dotH*scale)+",s"+scale }, 1500);
+			} 
+			lblY[c] = paper.text((40+i*dotW*scale),(h-c*dotH*scale+15),g)
+			lblY[c].attr({ 
+				opacity: .5,
+				font:'Verdana',
+				'font-size':10,
+				'text-anchor':'start'
+				})
+			lblY[c].toBack()	
+		c+=1 
+		}
+	
+			
+}
+
+//***** SLIDE5: TOTAL INCOMES *********
+
+function slide5() {
+	fontAttr = "attr({opacity: .5, font:'Verdana', 'font-size':10, 'text-anchor':'start'})",
+	scale = .4,
+	i0 = 18560070,
+	i1 =  2398761,
+	lblY = [];
+	
+	axis = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
+	 
+	for (i in data) {
+		dot[i].animate({ transform: "t"+(width-i*dotW*scale-70)+","+(350-data[i]["totIncome"]/i0*330+",s"+scale)},1500)
+		dot[i].animate({opacity: .5},1000) 
+	}
+
+	for (i in axis) {
+		lblY[i] = paper.text(25, (330-axis[i]/18.6*330) ,axis[i])
+		lblY[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+	}
+	lblY[i+1] = paper.text(13,150,"Total income (million euros)").attr({transform: "r" + 270})		
+	lblY[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})
+}
+
+//***** SLIDE6: TOP 6 *********
+
+function slide6(dir) {
+	if (dir==1) {
+		for (i=0; i<=5; i++) {
+			dot[i].attr({
+				fill: "orange"
+			}) 
+		}	
+	}
+	else {
+		currentSlide = 5;
+		slide5(-1);
+	}
+}
+
+//***** SLIDE7: RICHEST *********
+
+function slide7(dir) {
+	if (dir == -1) {
+		matti.remove()
+		matti = ""
+	}
+	for (i=0; i<=5; i++) {
+		dot[i].animate({fill: getColor(data[i]["sex"])},1000) 
+	}	
+	for (i=1; i<dot.length; i++) {
+		dot[i].animate({opacity: 0},1500)
+		wp = width+30;
+		if (Math.random() < .5) { wp = -30 }; 
+		dot[i].animate({ transform: "t"
+				+(wp)+","
+				+(Math.random()*height) },1500)
+	}
+	
+	dot[0].animate({ transform: "t"
+		+(width/2)+","
+		+(150)
+		+",s"+1},1000)
+}
+
+//***** SLIDE8: INTRO MATTI *********
+function slide8(dir) {
+	if (matti=="") {
+		matti = paper.path(dotPath);
+
+		matti.translate(-20,150);
+
+	    matti.attr({
+			fill: "black", 
+			stroke: "none",
+			opacity: .5
+			});
+		matti.animate({ transform: "t"
+				+(width/2-20)+","
+				+(150)
+				+",s"+1},1000)		
+	}
+
+	if (dir == -1) {
+		dot[0].animate({ transform: "t"
+				+(width/2)+","
+				+(150)
+				+",s"+1},1000)		
+	}
+}
+ 
+//***** SLIDE9: COMPARE MATTI *********
+function slide9(dir) {
+	dot[0].animate({ transform: "t"
+			+(width/2-20)+","
+			+(150)
+			+",s"+24},1000)
+	if (dir==-1) {
+		matti = paper.path(dotPath);
+		matti.translate(width/2-20,150);
+
+	    matti.attr({
+			fill: "black", 
+			stroke: "none",
+			opacity: .5
+			});
+	}
+}
+
+//***** SLIDE10: REMOVE MATTI *********
+function slide10(dir) {
+    matti.animate({ opacity: 0 }, 1000 );
+
+	if (dir==-1) {
+		currentSlide = 7
+		slide7(-1)
+	}
+}		
+
+//***** SLIDE11: CAPITAL/WORK GRAPH *********
+function slide11() {
+    matti.remove();
+	
+	x0 = 8034264,
+	x1 = 0,
+	y0 = 18524894,
+	y1 = 0,
+	w = 500,
+	h = 300,
+	xMargin = (width-w)/2,
+	yMargin = 10,
+	scale = .4,
+	xAxis = [],
+	yAxis = [],
+	lblY = [],
+	lblX = [];
+	
+	for (i in dot) {
+		dot[i].animate({ transform: "t"
+				+(xMargin+data[i]["earnedIncome"]/x0*w)+","
+				+((h+yMargin)-data[i]["capIncome"]/y0*h)
+				+",s"+scale},1000)
+		
+		dot[i].animate({ opacity: .5 }, 2000 );	
+	}
+	
+	for (i=1; i<=8;i++) {
+		xAxis.push(i)
+	}
+	for (i=2; i<=18;i=i+2) {
+		yAxis.push(i)
+	}
+	
+	for (i in xAxis) {
+		lblX[i] = paper.text(xMargin-20+xAxis[i]/8*w, (h+yMargin+30) ,xAxis[i])
+		lblX[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+	}
+	lblX[i+1] = paper.text(xMargin+w/2,(h+yMargin+50),"Earned income (million euros)")		
+	lblX[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})
+ 
+
+	for (i in yAxis) {
+		lblY[i] = paper.text(xMargin-20, (h+yMargin-yAxis[i]/18*h+30) ,yAxis[i])
+		lblY[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+	}
+	lblY[i+1] = paper.text(xMargin-40,h/2,"Capital income (million euros)").attr({transform: "r" + 270})		
+	lblY[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})
+	
+}
+ 
+//***** SLIDE12: CAPITAL/TOTAL GRAPH *********
+function slide12() {
+	
+	groupedData = group(data,"capPercentCat","index"),
+	scale = .5,
+	h=300,
+	cols = 15,
+	yAxis = ["0-","10-","20-","30-","40-","50-","60-","70-","80-","90-","100"];
+	
+		for (var g in groupedData) {
+			console.log(g*dotH*scale)
+			for (var i in groupedData[g]) {
+				index = groupedData[g][i]
+
+				dot[index].animate({ transform:"t"
+				+(40+i*dotW*scale)+","
+				+(h+30-(g/100)*300-18/**dotH*scale*/)
+				+",s"+scale }, 1500);
+			}
+		
+		}
+	for (i in yAxis) {
+		lblY[i] = paper.text(23, (h+30-i/(yAxis.length-1)*h) ,yAxis[i])
+		lblY[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+		lblY[i].toBack()
+	}
+	lblY[i+1] = paper.text(10,h/2,"Capital share of total income (%)").attr({transform: "r" + 270})		
+	lblY[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})	
+	lblY[i+1].toBack()
+}
+
+//***** SLIDE13: TAXES *********
+function slide13() {
+	fontAttr = "attr({opacity: .5, font:'Verdana', 'font-size':10, 'text-anchor':'start'})",
+	scale = .4,
+	i0 = 60,
+	i1 =  0,
+	lblY = [],
+	h=270,
+	axis = [1,2,3,4,5,6];
+	
+	if (line !== undefined) {
+		line.remove();
+		line = undefined;
+		lineLbl.remove();
+	}
+		 
+	for (i in data) {
+		dot[i].animate({ transform: "t"+(width-i*dotW*scale-70)+","+(h-data[i]["taxPercent"]/i0*h-5+",s"+scale)},1500)
+	}
+
+	for (i in axis) {
+		lblY[i] = paper.text(25, (h-axis[i]/6*h+10) ,axis[i]*10)
+		lblY[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+	}
+	lblY[i+1] = paper.text(13,150,"Tax percent").attr({transform: "r" + 270})		
+	lblY[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})
+}
+
+//***** SLIDE14: INSERT 28%-LINE *********
+function slide14() {
+		l28 = 28/i0*270,
+		lMargin=40;
+
+		axis = [1,2,3,4,5,6]
+		if (line == undefined) {
+			line = paper.rect(lMargin, (h-l28+9), width-lMargin, 6);
+			line.attr({
+				fill: "orange",
+				stroke: 0,
+				opacity: .3
+			})
+			line.toBack()
+
+			lineLbl = paper.text(width-40,(h-l28+9-8), "28%");
+			lineLbl.attr({
+				opacity: .3, 
+				'font-family':"'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', 'Helvetica', 'Arial', 'Lucida Grande', 'sans-serif'",
+				'font-weight': 800, 
+				'font-size':20, 
+				'text-anchor':'start',
+				fill: "orange"
+				})			
+		}
+
+		for (i in axis) {
+			lblY[i] = paper.text(25, (h-axis[i]/6*h+10) ,axis[i]*10)
+			lblY[i].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'start'})
+		}
+		lblY[i+1] = paper.text(13,150,"Tax percent").attr({transform: "r" + 270})		
+		lblY[i+1].attr({opacity: lblFontOp, font: lblFontFace, 'font-size':lblFontSize, 'text-anchor':'middle'})
+	
+
+
+}
+
+//***** SLIDE15: RE-ENTER MATTI *********
+
+function slide15(dir) {
+
+console.log(matti.removed)
+	if (matti.removed) {
+		matti = paper.path(dotPath);
+		matti.translate(-20,(h-28/i0*h-10));
+
+	    matti.attr({
+			fill: "black", 
+			stroke: "none",
+			opacity: .5
+			});
+		matti.animate({ transform: "t"
+				+(width-60)+","
+				+(h-28/i0*h-10)
+				+",s"+1},2000)
+	}		
+
+	if (dir == -1) {
+		dot[0].animate({ transform: "t"
+				+(width/2)+","
+				+(150)
+				+",s"+1},1000)		
+	}
+}
+
+
+//***** SLIDE16: LAST *********
+function slide16() {
+	for (i in dot) {
+		dot[i].animate({opacity:.05},700)
+	}
+	line.animate({opacity:.05},700)
+	lineLbl.animate({opacity:.05},700)
+	matti.animate({opacity:.05},700)
+	
+	replay = paper.path(replayPath);
+	replay.translate(width/2,150)
+	replay.attr({
+		fill: "black",
+		opacity: .5,
+		stroke: "none"
+	})
+	replay.scale(8)
+	replay.node.onmouseover = function() { 
+		this.style.cursor = 'pointer'; 
+		replay.attr({opacity: .8});
+	}
+	replay.node.onclick = function() { 
+		for (i in dot) {
+			dot[i].remove()
+		}
+		for (i in lblY) {
+			lblY[i].remove()
+		}
+		matti.remove()
+		line.remove()
+		lineLbl.remove()
+		
+		replay.remove()
+		currentSlide = 1;
+		document.getElementById('text_container').innerHTML = slides[currentSlide];
+		slide1();	
+	}
+	replay.node.onmouseout = function() { 
+		replay.attr({opacity: .5});
+		}
+	
+}
+
+
+
+
+		</script>
+    
+<br><br>
+<div id="text">This visualization was made by <strong>Jens Finnäs</strong> based on data available on for example <a href="http://www.hs.fi/verotiedot/list.do" target="_blank">Helsingin Sanomat</a> and <a href="http://yle.fi/tvuutiset/uutiset/upics/liitetiedostot/verot2010/koko_maa_paaomatulo.htm" target="_blank">YLE</a>. Read more about how it was made in <a href="http://dataist.wordpress.com/2011/11/29/interactive-the-100-richest-people-in-finland/" target="_blank">this blog post</a>.<br>
+	Contacts: <a href="mailto:jens.finnas@gmail.com">jens.finnas@gmail.com</a>, <a href="http://twitter.com/#!/jensfinnas">@jensfinnas</a>, <a href="http://twitter.com/#!/the_dataist">@the_dataist</a>.</div>
+
+<div id="share">
+	<a href="https://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="the_dataist">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script><br><br>
+	
+	
+	<div class="fb-like" data-href="http://jensfinnas.com/dataist/taxtop/" data-send="false" data-layout="button_count" data-width="100" data-show-faces="false"></div>
+	
+</div>
+
+</body>  
+</html>
